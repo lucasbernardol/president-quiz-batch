@@ -1,5 +1,7 @@
 <div align="center">
-  <img src="./assets/logo.svg" alt="President Quiz" />
+  <h2 align="center">
+    <img src="./assets/logo.svg" alt="President Quiz" />
+  </h2>
 
   <p align="center">
     🇧🇷 President Quiz, é um jogo de perguntas e respostas relacionadas ao atual presidente (2022) do Brasil.<br/> Construído com Batch Script (atenção: é uma atividade lúdica do curso de informática).
