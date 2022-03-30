@@ -4,7 +4,7 @@
   </h2>
 
   <p align="center">
-    🇧🇷 President Quiz, é um jogo de perguntas e respostas relacionadas ao atual presidente (2022) do Brasil.<br/> Construído com Batch Script (atenção: é uma atividade lúdica do curso de informática).
+    🎓🇧🇷 President Quiz, é um jogo de perguntas e respostas relacionadas ao atual presidente (2022) do Brasil.<br/> Construído com Batch Script (atenção: é uma atividade lúdica do curso de informática).
   </p>
 </div>
 
@@ -19,3 +19,9 @@
 
   <img src="https://img.shields.io/badge/author-Jos%C3%A9%20Lucas-brightgreen" alt="Author" />
 </div>
+
+<p align="center">
+  <small>
+    Build with ❤️ by: <a href="https://github.com/lucasbernardol">José Lucas</a>
+  </small>
+</p>
