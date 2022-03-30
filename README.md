@@ -4,7 +4,7 @@
   </h2>
 
   <p align="center">
-    🎓🇧🇷 President Quiz, é um jogo de perguntas e respostas relacionadas ao atual presidente (2022) do Brasil.<br/> Construído com Batch Script (atenção: é uma atividade lúdica do curso de informática).
+    President Quiz, é um jogo de perguntas e respostas relacionadas ao atual presidente (2022) do Brasil.<br/> Construído com Batch Script (atenção: é uma atividade lúdica do curso de informática). 🎓🇧🇷
   </p>
 </div>
 
@@ -62,6 +62,10 @@ REM Presitent.bat
 :: recomendação é o uso de alguma das instruções acima (que estão comentadas).
 start Presitent.bat
 ```
+
+Após realizar os procedimentos acima, acredito que esse mimi tutorial te ajudou,
+parabéns. Gostou do projeto? Faça a sua contribuição com (pull requests) ou me
+dê uma estrelinha. 👋 Até mais!
 
 ## :boy: Autor
 
