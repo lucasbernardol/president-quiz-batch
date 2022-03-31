@@ -8,14 +8,20 @@
 :: Repository: https://github.com/lucasbernardol/president-quiz-batch/
 
 REM Path variables/directories
-set temporary_dir_path=%temp%
 set desktop_dir_path=%userprofile%\Desktop
+set documents_dir_path=%userprofile%\Documents
+set temp_dir_path=%temp%
 
-set welcome_message_path=%temporary_dir_path%\welcome.vbs
-set log_filename_path=%desktop_dir_path%\president.log.txt
+set welcome_message_path=%temp_dir_path%\welcome.vbs
 
 set winner_details_file_path=%desktop_dir_path%\winner.txt
 set extension_config_file_path=.\config.bat
+
+REM LOGS
+set logs_directory=%documents_dir_path%\president-logs
+
+:: File format BR: "president.quiz-(day)-(month)-(year).txt"
+set logs_filename_path="president.quiz-%date:~0,2%-%date:~3,2%-%date:~6,4%.txt"
 
 REM Variables: main colors
 set base_color=0a
@@ -35,6 +41,9 @@ set question_six_color=0c
 :: "President.bat". Em geral, usaremos a instrução "call".
 set allow_custom_colors=0
 
+REM Enable logs
+set private_allow_logs=1
+
 REM Global variables
 set extras=0
 set /a repeat_questions=2
@@ -42,25 +51,32 @@ set /a total_errors=0
 set /a menu_returned=1
 
 REM Current time format: HH:MM:SS - 14:05:85
+:: As variáveis abaixo, armazenam o horário inicial e final do jogo. Em suma, 
+:: o horário final será alterado quando ouver um ganhador.
 set president_game_start_time=%time:~0,8%
-
-:: A variável abaixo armazena o horário de finalização do jogo.
 set president_game_end_time=0
+
+REM Create if exits "logs" directory.
+if not exist %logs_directory% mkdir %logs_directory%
 
 
 REM Start GAME:
 :start_application
-set current_date=%date%
-set current_log_time='%president_game_start_time% - %current_date%'
+set LOG_TIME=%time:~0,8%
+set LOG_DATE=%date%
 
 if exist %extension_config_file_path% (
   call %extension_config_file_path%
-  echo "LOG: load '%extension_config_file_path%' file. Timestamp: %current_log_time%">>%log_filename_path%
-) else (
-  REM As informações de log (instruções executadas) são salvas
-  REM em um arquivo chamado "president.log.txt" na Área de trabalho 
 
-  echo "LOG: file '%extension_config_file_path%' not found. Timestamp: %current_log_time%">>%log_filename_path%
+  if %private_allow_logs% EQU 1 (
+    call :log "Pre %LOG_TIME% %LOG_DATE% LOG: load %extension_config_file_path% file"
+  )
+) else (
+  :: Antes tudo, só será possível exibir/criar LOGS se a variável 
+  :: "private_allow_logs" for igual a 1, ou seja, verdadeiro na lógica booleana.
+  if %private_allow_logs% EQU 1 (
+    call :log "Pre %LOG_TIME% %LOG_DATE% LOG: file %extension_config_file_path% not exists!"
+  )
 )
 
 if exist %welcome_message_path% (
@@ -68,6 +84,7 @@ if exist %welcome_message_path% (
 ) else (
   goto create_welcome_message
 )
+
 
 REM Open welcome message / global message
 :open_welcome_message
@@ -79,7 +96,7 @@ echo MsgBox "Seja bem-vindo(a) ao President Quiz, um jogo de perguntas e respost
 :: A instrução "Attrib" será usada para deixar o arquvio "welcome.vbs"
 :: oculto e somente leitura.
 attrib +H +R %welcome_message_path%
-echo "LOG: Create file 'welcome.vbs'. Timestamp: '%time:~0,8% - %date%'">>%log_filename_path%
+call :log "%time:~0,8% %date% LOG: Create 'welcome.vbs' file"
 goto open_welcome_message
 
 :update_menu_returned
@@ -89,6 +106,7 @@ goto menu
 :reset_repeat_questions
 set /a repeat_questions=2
 goto start_application
+
 
 :: Essa seção é responsável por exibir o menu/opções de jogador. Permitindo
 :: que o usuário tenha duas opções: jogar ou sair!
@@ -630,7 +648,7 @@ goto update_menu_returned
 color %base_color%
 rem The global variable %username% returns the machine/computer username.
 title Vencedor: %username%
-echo "LOG: Winner '%username%'. Timestamp: '%time:~0,8% - %date%'">>%log_filename_path%
+call :log "%time:~0,8% %date% LOG: winner %username%"
 mode 64,42 && cls
 
 set president_game_end_time=%time:~0,8%
@@ -666,6 +684,7 @@ if "%winner_option%" == "1" (
 REM Application stats
 :winner_create_stats_file
 cls
+call :log "%time:~0,8% %date% LOG: Create '%winner_details_file_path%' file"
 REM File: crate winner details
 echo Info: detalhes do jogo - (%username%)>%winner_details_file_path%
 echo  Hora inicial: "%president_game_start_time%">>%winner_details_file_path%
@@ -711,13 +730,31 @@ if /i "%delete_winner_file_option%" == "y" (
   REM Example: erase /f /q %winner_details_file_path%
 
   del /f /q  %winner_details_file_path%
+  
+  call :log "%time:~0,8% %date% LOG: Remove '%winner_details_file_path%' file."
 ) else if /i "%delete_winner_file_option%" NEQ "n" (
   goto winner_file_view_reload
 )
 
 REM REST application/realod
+call :log "%time:~0,8% %date% LOG: File '%winner_details_file_path%' not removed."
+pause
 goto start_application
 
-REM Exit
+REM EXIT:
+
+:: Minhas observações finais: você é livre para modificar, distribuir, entre 
+:: outros. Mas não esqueça de mencionar o autor original. Fique à vontade.
 :program_close
+if %private_allow_logs% EQU 1 call :log "%time:~0,8% %date% LOG: Goodbye."
 exit
+
+REM LOG:
+
+:: A "label" ou seção abaixo, é uma espécie de função, responsável por criar
+:: um histórico das principais instruções que foram executadas (Debug). 
+:: Basicamente, os dados/informações são armazenadas no arquivo "president.log", 
+:: localizado no diretório de "documentos" do computador.
+:log
+echo:%~1 >>%logs_directory%\%logs_filename_path%
+goto :EOF
