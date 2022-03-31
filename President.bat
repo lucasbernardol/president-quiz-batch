@@ -12,9 +12,12 @@ set desktop_dir_path=%userprofile%\Desktop
 set documents_dir_path=%userprofile%\Documents
 set temp_dir_path=%temp%
 
-set welcome_message_path=%temp_dir_path%\welcome.vbs
+set extras_dir_path=extras
+set extras_functions_dir_path=extras\functions
 
+set welcome_message_path=%temp_dir_path%\welcome.vbs
 set winner_details_file_path=%desktop_dir_path%\winner.txt
+
 set extension_config_file_path=.\config.bat
 
 REM LOGS
@@ -139,6 +142,13 @@ if "%menu_selected_option%" == "" (
 
 if /i "%menu_selected_option%" == "help" (
   goto application_help
+)
+
+if /i "%menu_selected_option%" == "egg" (
+  :: Uma mensagem "secreta"!
+  call %extras_functions_dir_path%\egg.bat %extras_dir_path%\vbs\egg.message.vbs
+ 
+  goto update_menu_returned
 )
 
 if "%menu_selected_option%" == "1" (goto question_one)
@@ -612,6 +622,7 @@ color %base_color%
 if %allow_logs% EQU 1 call :log_with_timestamp "LOG: Open 'whitespaces' error."
 title Error: Entradas
 cls
+echo.
 echo [+]--------------------------------------------[+]
 echo.
 echo    OBS: Informe os parametros corretos, ou isso
