@@ -40,9 +40,7 @@ set question_six_color=0c
 :: um arquivo "config.bat" na raiz do projeto ou no mesmo diretório do arquivo 
 :: "President.bat". Em geral, usaremos a instrução "call".
 set allow_custom_colors=0
-
-REM Enable logs
-set private_allow_logs=1
+set allow_logs=1
 
 REM Global variables
 set extras=0
@@ -57,26 +55,22 @@ set president_game_start_time=%time:~0,8%
 set president_game_end_time=0
 
 REM Create if exits "logs" directory.
-if not exist %logs_directory% mkdir %logs_directory%
-
+if not exist %logs_directory% (
+  mkdir %logs_directory%
+)
 
 REM Start GAME:
 :start_application
-set LOG_TIME=%time:~0,8%
-set LOG_DATE=%date%
+mode 64,32
 
 if exist %extension_config_file_path% (
   call %extension_config_file_path%
-
-  if %private_allow_logs% EQU 1 (
-    call :log "Pre %LOG_TIME% %LOG_DATE% LOG: load %extension_config_file_path% file"
-  )
-) else (
+  
+  if %allow_logs% EQU 1 call :log_with_timestamp "PRE-LOG: Load config file."
+ ) else (
   :: Antes tudo, só será possível exibir/criar LOGS se a variável 
-  :: "private_allow_logs" for igual a 1, ou seja, verdadeiro na lógica booleana.
-  if %private_allow_logs% EQU 1 (
-    call :log "Pre %LOG_TIME% %LOG_DATE% LOG: file %extension_config_file_path% not exists!"
-  )
+  :: "allow_logs" for igual a 1, ou seja, verdadeiro na lógica booleana.
+  if %allow_logs% EQU 1 call :log_with_timestamp "PRE-LOG: Batch started."
 )
 
 if exist %welcome_message_path% (
@@ -93,15 +87,20 @@ goto start_application
 
 :create_welcome_message
 echo MsgBox "Seja bem-vindo(a) ao President Quiz, um jogo de perguntas e respostas sobre o presidente (atual - 2022) Jair Bolsonaro. Autor: lucasbernardol", 64, "President quiz - version: 0.0.1">%welcome_message_path%
+
 :: A instrução "Attrib" será usada para deixar o arquvio "welcome.vbs"
 :: oculto e somente leitura.
 attrib +H +R %welcome_message_path%
-call :log "%time:~0,8% %date% LOG: Create 'welcome.vbs' file"
+if %allow_logs% EQU 1 (
+  call :log_with_timestamp "PRE-LOG: Create 'welcome.vbs' file."
+)
 goto open_welcome_message
+
 
 :update_menu_returned
 set /a menu_returned=%menu_returned% + 1
 goto menu
+
 
 :reset_repeat_questions
 set /a repeat_questions=2
@@ -109,11 +108,11 @@ goto start_application
 
 
 :: Essa seção é responsável por exibir o menu/opções de jogador. Permitindo
-:: que o usuário tenha duas opções: jogar ou sair!
+:: que o usuário tenha duas opções: jogar ou sair (as escolhas podem ser alteradas)
 :menu
-mode 64,32
-color %base_color%
 title President Quiz - version: 0.0.1
+color %base_color% && cls
+if %allow_logs% EQU 1 call :log_with_timestamp "LOG: Open MENU."
 echo.
 echo [+]----------------------------------------------[+]
 echo.
@@ -132,10 +131,11 @@ if %menu_returned% LEQ 1 (
 ) 
 echo  1) Jogar   2) Sair
 echo.
-
 set /p "menu_selected_option=Digite>: "
 
-if "%menu_selected_option%" == "" (goto menu_invalid_selected_option)
+if "%menu_selected_option%" == "" (
+  goto menu_invalid_selected_option
+)
 
 if /i "%menu_selected_option%" == "help" (
   goto application_help
@@ -151,7 +151,8 @@ if %allow_custom_colors% EQU 1 (
   color %question_one_color%
 ) 
 
-:: O usuário será retornado para esse menu se a opção escolhida é inválida
+:: O usuário será retornado para esse menu se a opção 
+:: escolhida é inválida.
 :question_one_menu
 cls
 if %repeat_questions% EQU 0 (
@@ -608,8 +609,9 @@ if "%x%" == "2" (goto program_close)
 rem Error: selected option
 :menu_invalid_selected_option
 color %base_color%
-cls
+if %allow_logs% EQU 1 call :log_with_timestamp "LOG: Open 'whitespaces' error."
 title Error: Entradas
+cls
 echo [+]--------------------------------------------[+]
 echo.
 echo    OBS: Informe os parametros corretos, ou isso
@@ -625,18 +627,19 @@ goto update_menu_returned
 rem HELP
 :application_help
 title President Quiz - Extras
+if %allow_logs% EQU 1 call :log_with_timestamp "LOG: Open HELP context."
 cls
 echo.
-echo [+]--------------------------------------------[+]    
+echo [+]-----------------------------------------------------[+]    
 echo.
-echo     1) Este programa foi desenvolvido 
-echo     visando o entretenimento
+echo    1) Este programa foi desenvolvido 
+echo      visando o entretenimento - version: 0.0.1
 echo.	
-echo     2) Todos os dereitos reservados.
+echo    2) Todos os dereitos reservados.
 echo.
-echo     3) Fonte: github.com/lucasbernardol/quiz
+echo    3) github.com/lucasbernardol/president-quiz-bath
 echo.
-echo [+]--------------------------------------------[+]   
+echo [+]-----------------------------------------------------[+]   
 echo.
 echo Pressione qualquer tecla para voltar ao Menu...
 pause >nul
@@ -646,9 +649,8 @@ goto update_menu_returned
 :: Winner
 :winner
 color %base_color%
-rem The global variable %username% returns the machine/computer username.
 title Vencedor: %username%
-call :log "%time:~0,8% %date% LOG: winner %username%"
+if %allow_logs% EQU 1 call :log_with_timestamp "LOG: Winner %username%!"
 mode 64,42 && cls
 
 set president_game_end_time=%time:~0,8%
@@ -657,7 +659,6 @@ echo.
 echo [+]--------*****----------------*****--------[+]
 echo.
 echo    Vencedor: %username%
-echo.
 echo    Gostou? Compartilhe com os amigos!
 echo.
 echo    Erros: (%total_errors%)
@@ -675,21 +676,21 @@ if "%winner_option%" == "" (
 )
 
 if "%winner_option%" == "1" (
-  rem RESET GAME
   goto winner_create_stats_file
 ) else (
   goto program_close
 )
 
+
 REM Application stats
 :winner_create_stats_file
-cls
-call :log "%time:~0,8% %date% LOG: Create '%winner_details_file_path%' file"
-REM File: crate winner details
+::Crate winner details
 echo Info: detalhes do jogo - (%username%)>%winner_details_file_path%
 echo  Hora inicial: "%president_game_start_time%">>%winner_details_file_path%
 echo  Hora final: "%president_game_end_time%">>%winner_details_file_path%
 echo  Total de erros: "%total_errors%">>%winner_details_file_path%
+
+if %allow_logs% EQU 1 call :log_with_timestamp "LOG: Created details file."
 
 :: As pricipais variáveis (ou variáveis de estado) serão resetadas, ou seja,
 :: irão possuir, novamanete, o valor inicial.
@@ -702,6 +703,7 @@ set president_game_start_time=%time:~0,8%
 :winner_file_view
 REM Open "winner.txt" file
 start /wait notepad %winner_details_file_path%
+if %allow_logs% EQU 1 call :log_with_timestamp "LOG: Opened details file."
 
 :winner_file_view_reload
 color %color_red% && cls
@@ -710,8 +712,6 @@ echo [+]--------*****----------------*****--------[+]
 echo.
 echo   Info: Deseja deletar o arquivo "winner.txt"
 echo     que foi criado no Desktop?
-echo.
-echo   Info: armazena os detalhes do jogo atual!
 echo.
 echo [+]--------*****----------------*****--------[+]
 echo.
@@ -731,13 +731,17 @@ if /i "%delete_winner_file_option%" == "y" (
 
   del /f /q  %winner_details_file_path%
   
-  call :log "%time:~0,8% %date% LOG: Remove '%winner_details_file_path%' file."
+  if %allow_logs% EQU 1 (
+    call :log_with_timestamp "LOG: Remove '%winner_details_file_path%' file."
+  )
 ) else if /i "%delete_winner_file_option%" NEQ "n" (
   goto winner_file_view_reload
 )
 
 REM REST application/realod
-call :log "%time:~0,8% %date% LOG: File '%winner_details_file_path%' not removed."
+if %allow_logs% EQU 1 (
+  call :log_with_timestamp "LOG: File '%winner_details_file_path%' not removed."
+)
 goto start_application
 
 REM EXIT:
@@ -745,7 +749,7 @@ REM EXIT:
 :: Minhas observações finais: você é livre para modificar, distribuir, entre 
 :: outros. Mas não esqueça de mencionar o autor original. Fique à vontade.
 :program_close
-if %private_allow_logs% EQU 1 call :log "%time:~0,8% %date% LOG: Goodbye."
+if %allow_logs% EQU 1 call :log_with_timestamp "LOG: Goodbye."
 exit
 
 REM LOG:
@@ -756,4 +760,8 @@ REM LOG:
 :: localizado no diretório de "documentos" do computador.
 :log
 echo:%~1 >>%logs_directory%\%logs_filename_path%
+goto :EOF
+
+:log_with_timestamp
+echo:%time:~0,8% %date% %~1 >>%logs_directory%\%logs_filename_path%
 goto :EOF
