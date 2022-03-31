@@ -1,7 +1,5 @@
 @echo off
 
-msg * "LOAD: config file"
-
 REM Arquivo de personalização/configurações
 
 :: Para usar as configurações externas, altere o nome desse arquivo, em outras
