@@ -738,7 +738,6 @@ if /i "%delete_winner_file_option%" == "y" (
 
 REM REST application/realod
 call :log "%time:~0,8% %date% LOG: File '%winner_details_file_path%' not removed."
-pause
 goto start_application
 
 REM EXIT:
