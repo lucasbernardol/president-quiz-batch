@@ -7,28 +7,30 @@
 :: License: MIT
 :: Repository: https://github.com/lucasbernardol/president-quiz-batch/
 
+set VERSION=0.0.1
+
 REM Path variables/directories
 set desktop_dir_path=%userprofile%\Desktop
 set documents_dir_path=%userprofile%\Documents
 set temp_dir_path=%temp%
 
-set extras_dir_path=extras
-set extras_functions_dir_path=extras\functions
+set resources_folder_dir_path=extras
+set resources_folder_function_dir_path=extras\functions
 
-set welcome_message_path=%temp_dir_path%\welcome.vbs
+set welcome_path=%temp_dir_path%\welcome.quiz.vbs
 set winner_details_file_path=%desktop_dir_path%\winner.txt
 
 set extension_config_file_path=.\config.bat
 
 REM LOGS
-set logs_directory=%documents_dir_path%\president-logs
+set logs_directory=%documents_dir_path%\logs
 
 :: File format BR: "president.quiz-(day)-(month)-(year).txt"
 set logs_filename_path="president.quiz-%date:~0,2%-%date:~3,2%-%date:~6,4%.txt"
 
 REM Variables: main colors
-set base_color=0a
-set color_red=0c
+set command_prompt_color=07
+set command_prompt_alert_color=0c
 
 REM Questions custom/colors
 set question_one_color=0a
@@ -43,13 +45,18 @@ set question_six_color=0c
 :: um arquivo "config.bat" na raiz do projeto ou no mesmo diretório do arquivo 
 :: "President.bat". Em geral, usaremos a instrução "call".
 set allow_custom_colors=0
-set allow_logs=1
+
+set ALLOW_LOGS=1
 
 REM Global variables
-set extras=0
-set /a repeat_questions=2
-set /a total_errors=0
+set /a max_repeat_questions=2
+set /a total_displayed_errors=0
+
+:: A variável "menu_returned" controla a quantida de vezes em que a hora atual, 
+:: ou seja, o horário inicial do jogo será exibido em tela. (variável de estado).
 set /a menu_returned=1
+
+set displayed_error_argument=0
 
 REM Current time format: HH:MM:SS - 14:05:85
 :: As variáveis abaixo, armazenam o horário inicial e final do jogo. Em suma, 
@@ -62,60 +69,58 @@ if not exist %logs_directory% (
   mkdir %logs_directory%
 )
 
+
 REM Start GAME:
 :start_application
 mode 64,32
-
 if exist %extension_config_file_path% (
   call %extension_config_file_path%
-  
-  if %allow_logs% EQU 1 call :log_with_timestamp "PRE-LOG: Load config file."
- ) else (
+) else (
   :: Antes tudo, só será possível exibir/criar LOGS se a variável 
-  :: "allow_logs" for igual a 1, ou seja, verdadeiro na lógica booleana.
-  if %allow_logs% EQU 1 call :log_with_timestamp "PRE-LOG: Batch started."
+  :: "ALLOW_LOGS" for igual a 1, ou seja, verdadeiro na lógica booleana.
+  if %ALLOW_LOGS% EQU 1 call :log_with_timestamp "PRE-LOG: Batch started."
 )
 
-if exist %welcome_message_path% (
-  goto menu
-) else (
-  goto create_welcome_message
-)
+if exist %welcome_path% ( goto menu ) else ( goto welcome_view )
 
 
 REM Open welcome message / global message
-:open_welcome_message
-start /wait %welcome_message_path%
+:open_welcome_view
+cls && start /wait %welcome_path%
 goto start_application
 
-:create_welcome_message
-echo MsgBox "Seja bem-vindo(a) ao President Quiz, um jogo de perguntas e respostas sobre o presidente (atual - 2022) Jair Bolsonaro. Autor: lucasbernardol", 64, "President quiz - version: 0.0.1">%welcome_message_path%
+:welcome_view
+:: Variáveis auxiliares para a construção da mensage "welcome" ou de
+:: boas vindas! (vbs_body, vbs_title, vbs_context)
+set vbs_body="Seja bem-vindo(a) ao President Quiz!"
+set vbs_title="President quiz - Version: %VERSION%"
+set vbs_context=64
+
+echo MsgBox %vbs_body%, %vbs_context%, %vbs_title%>%welcome_path%
 
 :: A instrução "Attrib" será usada para deixar o arquvio "welcome.vbs"
-:: oculto e somente leitura.
-attrib +H +R %welcome_message_path%
-if %allow_logs% EQU 1 (
-  call :log_with_timestamp "PRE-LOG: Create 'welcome.vbs' file."
-)
-goto open_welcome_message
+:: oculto (+H) e somente leitura (+R).
+attrib +H +R %welcome_path%
+
+if %ALLOW_LOGS% EQU 1 call :log_with_timestamp "PRE-LOG: Saved 'welcome.vbs'."
+goto open_welcome_view
 
 
 :update_menu_returned
 set /a menu_returned=%menu_returned% + 1
 goto menu
 
-
-:reset_repeat_questions
-set /a repeat_questions=2
+:reset_max_repeat_questions
+set /a max_repeat_questions=2
 goto start_application
 
 
 :: Essa seção é responsável por exibir o menu/opções de jogador. Permitindo
 :: que o usuário tenha duas opções: jogar ou sair (as escolhas podem ser alteradas)
 :menu
-title President Quiz - version: 0.0.1
-color %base_color% && cls
-if %allow_logs% EQU 1 call :log_with_timestamp "LOG: Open MENU."
+title President Quiz - version: %VERSION%
+color %command_prompt_color% && cls
+if %ALLOW_LOGS% EQU 1 call :log_with_timestamp "LOG: MENU."
 echo.
 echo [+]----------------------------------------------[+]
 echo.
@@ -146,13 +151,13 @@ if /i "%menu_selected_option%" == "help" (
 
 if /i "%menu_selected_option%" == "egg" (
   :: Uma mensagem "secreta"!
-  call %extras_functions_dir_path%\egg.bat %extras_dir_path%\vbs\egg.message.vbs
+  call %resources_folder_function_dir_path%\egg.bat %resources_folder_dir_path%\vbs\egg.message.vbs
  
   goto update_menu_returned
 )
 
 if "%menu_selected_option%" == "1" (goto question_one)
-if "%menu_selected_option%" == "2" (goto program_close) else (goto menu)
+if "%menu_selected_option%" == "2" (goto close_application) else (goto menu)
 
 
 :: Question 01
@@ -165,9 +170,9 @@ if %allow_custom_colors% EQU 1 (
 :: escolhida é inválida.
 :question_one_menu
 cls
-if %repeat_questions% EQU 0 (
+if %max_repeat_questions% EQU 0 (
   msg * "Perdeu - tentativas esgotadas. Jogue novamente!"
-  goto reset_repeat_questions
+  goto reset_max_repeat_questions
 )
 
 echo.
@@ -177,7 +182,7 @@ echo    01) Qual a idade do presidente?
 echo.
 echo [+]--------------------------------------------[+]
 echo.
-echo Total de tentativas: %repeat_questions%
+echo Total de tentativas: %max_repeat_questions%
 echo.
 echo  1) 54 anos  
 echo  2) 59 anos   
@@ -190,21 +195,21 @@ if "%question_option%" == "" (goto question_one)
 
 if "%question_option%" == "4" (
   msg /w * "OK. Resposta correta!"
-  set /a repeat_questions=2
+  set /a max_repeat_questions=2
 
   goto question_two
 ) else (
-  set /a repeat_questions=%repeat_questions% - 1
+  set /a max_repeat_questions=%max_repeat_questions% - 1
 )
 
-if "%question_option%" == "1" (set extras="54 anos")
-if "%question_option%" == "2" (set extras="59 anos")
-if "%question_option%" == "3" (set extras="60 anos")
-if %extras% EQU 0 (set extras="Desconhecido")
+if "%question_option%" == "1" (set displayed_error_argument="54 anos")
+if "%question_option%" == "2" (set displayed_error_argument="59 anos")
+if "%question_option%" == "3" (set displayed_error_argument="60 anos")
+if %displayed_error_argument% EQU 0 (set displayed_error_argument="Desconhecido")
 
 :: Idependentemente da opção escolhida o contador de erros deve ser
 :: aumento ou "incrementado" com +1
-set /a total_errors=%total_errors% + 1 && cls
+set /a total_displayed_errors=%total_displayed_errors% + 1 && cls
 
 :: Abaixo será exibido a "interface" de error/resposta incorreta.
 echo.
@@ -212,10 +217,10 @@ echo [+]-------------------------------------[+]
 echo.
 echo    Oops, Resposta incorreta!
 echo.
-echo    Sua resposta: %extras%
-echo    Tentativas restantes: %repeat_questions%
+echo    Sua resposta: %displayed_error_argument%
+echo    Tentativas restantes: %max_repeat_questions%
 echo.
-echo    Erros: %total_errors%
+echo    Erros: %total_displayed_errors%
 echo.
 echo [+]-------------------------------------[+]
 echo.
@@ -224,11 +229,11 @@ echo.
 set /p "x=Digite>: "
 
 if "%x%" == "1" (
-  set extras=0
+  set displayed_error_argument=0
   goto question_one_menu
 )
 
-if "%x%" == "2" (goto program_close)
+if "%x%" == "2" (goto close_application)
 
 
 :: Question 02
@@ -239,9 +244,9 @@ if %allow_custom_colors% EQU 1 (
 
 :question_two_menu
 cls
-if %repeat_questions% EQU 0 (
+if %max_repeat_questions% EQU 0 (
   msg * "Perdeu - tentativas esgotadas. Jogue novamente!"
-  goto reset_repeat_questions
+  goto reset_max_repeat_questions
 )
 
 echo.
@@ -251,7 +256,7 @@ echo    02) Qual o do completo presidente?
 echo.
 echo [+]--------------------------------------------[+]
 echo.
-echo Total de tentativas: %repeat_questions%
+echo Total de tentativas: %max_repeat_questions%
 echo.
 echo  1) Jair Bolsonaro Messias 
 echo  2) Jair Messias Bolsonaro
@@ -264,29 +269,29 @@ if  "%question_option%" == "" (goto question_two)
 
 if  "%question_option%" == "2" (
   msg /w * "OK. Resposta correta!"
-  set /a repeat_questions=2
+  set /a max_repeat_questions=2
 
   goto question_three
 ) else (
-  set /a repeat_questions=%repeat_questions% - 1
+  set /a max_repeat_questions=%max_repeat_questions% - 1
 )
 
-if "%question_option%" == "1" (set extras="Jair Bolsonaro Messias")
-if "%question_option%" == "3" (set extras="Jair Bolsonaro")
-if "%question_option%" == "4" (set extras="Presidente Jair Messias Bolsonaro")
-if %extras% EQU 0 (set extras="Desconhecido")
+if "%question_option%" == "1" (set displayed_error_argument="Jair Bolsonaro Messias")
+if "%question_option%" == "3" (set displayed_error_argument="Jair Bolsonaro")
+if "%question_option%" == "4" (set displayed_error_argument="Presidente Jair Messias Bolsonaro")
+if %displayed_error_argument% EQU 0 (set displayed_error_argument="Desconhecido")
 
-set /a total_errors=%total_errors% + 1 && cls
+set /a total_displayed_errors=%total_displayed_errors% + 1 && cls
 
 echo.
 echo [+]-------------------------------------[+]
 echo.
 echo    Oops, Resposta incorreta!
 echo.
-echo    Sua resposta: %extras%
-echo    Tentativas restantes: %repeat_questions%
+echo    Sua resposta: %displayed_error_argument%
+echo    Tentativas restantes: %max_repeat_questions%
 echo.
-echo    Erros: %total_errors%
+echo    Erros: %total_displayed_errors%
 echo.
 echo [+]-------------------------------------[+]
 echo.
@@ -295,11 +300,11 @@ echo.
 set /p "x=Digite>: "
 
 if "%x%" == "1" (
-  set extras=0
+  set displayed_error_argument=0
   goto question_two_menu
 )
 
-if "%x%" == "2" (goto program_close)
+if "%x%" == "2" (goto close_application)
 
 
 :: Question: 03
@@ -310,9 +315,9 @@ if %allow_custom_colors% EQU 1 (
 
 :question_three_menu
 cls
-if %repeat_questions% EQU 0 (
+if %max_repeat_questions% EQU 0 (
   msg * "Perdeu. Tentativas esgotadas!"
-  goto reset_repeat_questions
+  goto reset_max_repeat_questions
 )
 
 echo.
@@ -322,7 +327,7 @@ echo    03) Quantos filhos tem o presidente?
 echo.
 echo [+]--------------------------------------------[+]
 echo.
-echo Total de tentativas: %repeat_questions%
+echo Total de tentativas: %max_repeat_questions%
 echo.
 echo  1) Tem 2 filho(s) 
 echo  2) Tem 3 filho(s)
@@ -335,29 +340,29 @@ if "%question_option%" == "" (goto question_three)
 
 if "%question_option%" == "3" (
   msg /w * "OK. Resposta correta!"
-  set /a repeat_questions=2
+  set /a max_repeat_questions=2
 
   goto question_four
 ) else (
-  set /a repeat_questions=%repeat_questions% - 1
+  set /a max_repeat_questions=%max_repeat_questions% - 1
 )
 
-if "%question_option%" == "1" (set extras="Tem 2 filhos")
-if "%question_option%" == "2" (set extras="Tem 3 filhos")
-if "%question_option%" == "4" (set extras="Tem 1 filho")
-if %extras% EQU 0 (set extras="Desconhecido") 
+if "%question_option%" == "1" (set displayed_error_argument="Tem 2 filhos")
+if "%question_option%" == "2" (set displayed_error_argument="Tem 3 filhos")
+if "%question_option%" == "4" (set displayed_error_argument="Tem 1 filho")
+if %displayed_error_argument% EQU 0 (set displayed_error_argument="Desconhecido") 
 
-set /a total_errors=%total_errors% + 1 && cls
+set /a total_displayed_errors=%total_displayed_errors% + 1 && cls
 
 echo.
 echo [+]-------------------------------------[+]
 echo.
 echo    Oops, Resposta incorreta!
 echo.
-echo    Sua resposta: %extras%
-echo    Tentativas restantes: %repeat_questions%
+echo    Sua resposta: %displayed_error_argument%
+echo    Tentativas restantes: %max_repeat_questions%
 echo.
-echo    Erros: %total_errors%
+echo    Erros: %total_displayed_errors%
 echo.
 echo [+]-------------------------------------[+]
 echo.
@@ -366,11 +371,11 @@ echo.
 set /p "x=Digite>: "
 
 if "%x%" == "1" (
-  set extras=0
+  set displayed_error_argument=0
   goto question_three_menu
 )
 
-if "%x%" == "2" (goto program_close)
+if "%x%" == "2" (goto close_application)
 
 
 :: Question: 04
@@ -381,9 +386,9 @@ if %allow_custom_colors% EQU 1 (
 
 :question_four_menu
 cls
-if %repeat_questions% EQU 0 (
+if %max_repeat_questions% EQU 0 (
   msg * "Perdeu. Tentativas esgotadas!"
-  goto reset_repeat_questions
+  goto reset_max_repeat_questions
 )
 
 echo.
@@ -393,7 +398,7 @@ echo    04) Qual a patente militar do Jair?
 echo.
 echo [+]--------------------------------------------[+]
 echo.
-echo Total de tentativas: %repeat_questions%
+echo Total de tentativas: %max_repeat_questions%
 echo.
 echo  1) USA Navy SEALS / Soldier
 echo  2) Atirador de elite
@@ -410,34 +415,34 @@ if "%question_option%" == "" (
 
 if "%question_option%" == "4" (
   msg /w * "OK. Resposta correta!"
-  set /a repeat_questions=2
+  set /a max_repeat_questions=2
 
   goto question_five
 ) else (
-  set /a repeat_questions=%repeat_questions% - 1
+  set /a max_repeat_questions=%max_repeat_questions% - 1
 )
 
-if "%question_option%" == "1" (set extras="USA Navy SEALS / Soldier")
-if "%question_option%" == "2" (set extras="Atirador de elite")
-if "%question_option%" == "3" (set extras="Tenente da Infantaria")
-if "%question_option%" == "5" (set extras="Especialista dos UDTS")
-if "%question_option%" == "6" (set extras="Infantaria")
+if "%question_option%" == "1" (set displayed_error_argument="USA Navy SEALS / Soldier")
+if "%question_option%" == "2" (set displayed_error_argument="Atirador de elite")
+if "%question_option%" == "3" (set displayed_error_argument="Tenente da Infantaria")
+if "%question_option%" == "5" (set displayed_error_argument="Especialista dos UDTS")
+if "%question_option%" == "6" (set displayed_error_argument="Infantaria")
 
-if %extras% EQU 0 (
-  set extras="Desconhecido"
+if %displayed_error_argument% EQU 0 (
+  set displayed_error_argument="Desconhecido"
 ) 
 
-set /a total_errors=%total_errors% + 1 && cls
+set /a total_displayed_errors=%total_displayed_errors% + 1 && cls
 
 echo.
 echo [+]-------------------------------------[+]
 echo.
 echo    Oops, Resposta incorreta!
 echo.
-echo    Sua resposta: %extras%
-echo    Tentativas restantes: %repeat_questions%
+echo    Sua resposta: %displayed_error_argument%
+echo    Tentativas restantes: %max_repeat_questions%
 echo.
-echo    Erros: %total_errors%
+echo    Erros: %total_displayed_errors%
 echo.
 echo [+]-------------------------------------[+]
 echo.
@@ -446,11 +451,11 @@ echo.
 set /p "x=Digite>: "
 
 if "%x%" == "1" (
-  set extras=0
+  set displayed_error_argument=0
   goto question_four_menu
 )
 
-if "%x%" == "2" (goto program_close)
+if "%x%" == "2" (goto close_application)
 
 
 :: Question: 05
@@ -461,9 +466,9 @@ if %allow_custom_colors% EQU 1 (
 
 :question_five_menu
 cls
-if %repeat_questions% EQU 0 (
+if %max_repeat_questions% EQU 0 (
   msg * "Perdeu - tentativas esgotadas. Jogue novamente!"
-  goto reset_repeat_questions
+  goto reset_max_repeat_questions
 )
 
 echo.
@@ -474,7 +479,7 @@ echo      motivo desse acontecimento?
 echo.
 echo [+]--------------------------------------------[+]
 echo.
-echo Total de tentativas: %repeat_questions%
+echo Total de tentativas: %max_repeat_questions%
 echo.
 echo  1) Reclamar do salario
 echo  2) Atirar em um dos companheiros de equipe
@@ -490,33 +495,33 @@ if "%question_option%" == "" (
 
 if  "%question_option%" == "1" (
   msg /w * "OK. Resposta correta!"
-  set /a repeat_questions=2
+  set /a max_repeat_questions=2
 
   goto question_six
 ) else (
-  set /a repeat_questions=%repeat_questions% - 1
+  set /a max_repeat_questions=%max_repeat_questions% - 1
 )
 
-if "%question_option%" == "2" (set extras="Atirar em um dos companheiros de equipe")
-if "%question_option%" == "3" (set extras="Xingamentos")
-if "%question_option%" == "4" (set extras="Respostas inadequadas")
-if "%question_option%" == "5" (set extras="Brigar com os superiores (ambiente militar)")
+if "%question_option%" == "2" (set displayed_error_argument="Atirar em um dos companheiros de equipe")
+if "%question_option%" == "3" (set displayed_error_argument="Xingamentos")
+if "%question_option%" == "4" (set displayed_error_argument="Respostas inadequadas")
+if "%question_option%" == "5" (set displayed_error_argument="Brigar com os superiores (ambiente militar)")
 
-if %extras% EQU 0 (
-  set extras="Desconhecido"
+if %displayed_error_argument% EQU 0 (
+  set displayed_error_argument="Desconhecido"
 )
 
-set /a total_errors=%total_errors% + 1 && cls
+set /a total_displayed_errors=%total_displayed_errors% + 1 && cls
 
 echo.
 echo [+]-------------------------------------[+]
 echo.
 echo    Oops, Resposta incorreta!
 echo.
-echo    Sua resposta: %extras%
-echo    Tentativas restantes: %repeat_questions%
+echo    Sua resposta: %displayed_error_argument%
+echo    Tentativas restantes: %max_repeat_questions%
 echo.
-echo    Erros: %total_errors%
+echo    Erros: %total_displayed_errors%
 echo.
 echo [+]-------------------------------------[+]
 echo.
@@ -525,11 +530,11 @@ echo.
 set /p "x=Digite>: "
 
 if "%x%" == "1" (
-  set extras=0
+  set displayed_error_argument=0
   goto question_five_menu
 )
 
-if "%x%" == "2" (goto program_close)
+if "%x%" == "2" (goto close_application)
 
 
 :: Question 06
@@ -540,9 +545,9 @@ if %allow_custom_colors% EQU 1 (
 
 :question_six_menu
 cls
-if %repeat_questions% EQU 0 (
+if %max_repeat_questions% EQU 0 (
   msg * "Perdeu. Tentativas esgotadas!"
-  goto reset_repeat_questions
+  goto reset_max_repeat_questions
 )
 
 echo.
@@ -553,7 +558,7 @@ echo       do Jair Bolsonaro?
 echo.
 echo [+]--------------------------------------------[+]
 echo.
-echo Total de tentativas: %repeat_questions%
+echo Total de tentativas: %max_repeat_questions%
 echo.
 echo  1) 1.80m, Mito 
 echo  2) Mito, 1.85m
@@ -577,30 +582,30 @@ if "%question_option%" == "5" (
   
   goto winner
 ) else (
-  set /a repeat_questions=%repeat_questions% - 1
+  set /a max_repeat_questions=%max_repeat_questions% - 1
 )
 
-if "%question_option%" == "1" (set extras="1.80m, Mito")
-if "%question_option%" == "2" (set extras="Mito, 1.85m")
-if "%question_option%" == "3" (set extras="1.78m, Bolsonaro Mito")
-if "%question_option%" == "4" (set extras="1.83m, Jair Mito")
-if "%question_option%" == "6" (set extras="1.85m, Senhor da mitologia")
+if "%question_option%" == "1" (set displayed_error_argument="1.80m, Mito")
+if "%question_option%" == "2" (set displayed_error_argument="Mito, 1.85m")
+if "%question_option%" == "3" (set displayed_error_argument="1.78m, Bolsonaro Mito")
+if "%question_option%" == "4" (set displayed_error_argument="1.83m, Jair Mito")
+if "%question_option%" == "6" (set displayed_error_argument="1.85m, Senhor da mitologia")
 
-if %extras% EQU 0 (
-  set extras="Desconhecido"
+if %displayed_error_argument% EQU 0 (
+  set displayed_error_argument="Desconhecido"
 )
 
-set /a total_errors=%total_errors% + 1 && cls
+set /a total_displayed_errors=%total_displayed_errors% + 1 && cls
 
 echo.
 echo [+]-------------------------------------[+]
 echo.
 echo    Oops, Resposta incorreta!
 echo.
-echo    Sua resposta: %extras%
-echo    Tentativas restantes: %repeat_questions%
+echo    Sua resposta: %displayed_error_argument%
+echo    Tentativas restantes: %max_repeat_questions%
 echo.
-echo    Erros: %total_errors%
+echo    Erros: %total_displayed_errors%
 echo.
 echo [+]-------------------------------------[+]
 echo.
@@ -609,17 +614,17 @@ echo.
 set /p "x=Digite>: "
 
 if "%x%" == "1" (
-  set extras=0
+  set displayed_error_argument=0
   goto question_six_menu
 )
 
-if "%x%" == "2" (goto program_close)
+if "%x%" == "2" (goto close_application)
 
 
 rem Error: selected option
 :menu_invalid_selected_option
-color %base_color%
-if %allow_logs% EQU 1 call :log_with_timestamp "LOG: Open 'whitespaces' error."
+color %command_prompt_color%
+if %ALLOW_LOGS% EQU 1 call :log_with_timestamp "LOG: Open 'whitespaces' error."
 title Error: Entradas
 cls
 echo.
@@ -638,13 +643,13 @@ goto update_menu_returned
 rem HELP
 :application_help
 title President Quiz - Extras
-if %allow_logs% EQU 1 call :log_with_timestamp "LOG: Open HELP context."
+if %ALLOW_LOGS% EQU 1 call :log_with_timestamp "LOG: Open HELP context."
 cls
 echo.
 echo [+]-----------------------------------------------------[+]    
 echo.
 echo    1) Este programa foi desenvolvido 
-echo      visando o entretenimento - version: 0.0.1
+echo      visando o entretenimento - version: %VERSION%
 echo.	
 echo    2) Todos os dereitos reservados.
 echo.
@@ -659,9 +664,9 @@ goto update_menu_returned
 
 :: Winner
 :winner
-color %base_color%
+color %command_prompt_color%
 title Vencedor: %username%
-if %allow_logs% EQU 1 call :log_with_timestamp "LOG: Winner %username%!"
+if %ALLOW_LOGS% EQU 1 call :log_with_timestamp "LOG: Winner %username%!"
 mode 64,42 && cls
 
 set president_game_end_time=%time:~0,8%
@@ -672,7 +677,7 @@ echo.
 echo    Vencedor: %username%
 echo    Gostou? Compartilhe com os amigos!
 echo.
-echo    Erros: (%total_errors%)
+echo    Erros: (%total_displayed_errors%)
 echo.
 echo [+]--------*****----------------*****--------[+]
 echo. 
@@ -689,7 +694,7 @@ if "%winner_option%" == "" (
 if "%winner_option%" == "1" (
   goto winner_create_stats_file
 ) else (
-  goto program_close
+  goto close_application
 )
 
 
@@ -699,25 +704,25 @@ REM Application stats
 echo Info: detalhes do jogo - (%username%)>%winner_details_file_path%
 echo  Hora inicial: "%president_game_start_time%">>%winner_details_file_path%
 echo  Hora final: "%president_game_end_time%">>%winner_details_file_path%
-echo  Total de erros: "%total_errors%">>%winner_details_file_path%
+echo  Total de erros: "%total_displayed_errors%">>%winner_details_file_path%
 
-if %allow_logs% EQU 1 call :log_with_timestamp "LOG: Created details file."
+if %ALLOW_LOGS% EQU 1 call :log_with_timestamp "LOG: Created details file."
 
 :: As pricipais variáveis (ou variáveis de estado) serão resetadas, ou seja,
 :: irão possuir, novamanete, o valor inicial.
-set extras=0
-set /a total_errors=0
-set /a repeat_questions=2
+set displayed_error_argument=0
+set /a total_displayed_errors=0
+set /a max_repeat_questions=2
 set /a menu_returned=1
 set president_game_start_time=%time:~0,8%
 
 :winner_file_view
 REM Open "winner.txt" file
 start /wait notepad %winner_details_file_path%
-if %allow_logs% EQU 1 call :log_with_timestamp "LOG: Opened details file."
+if %ALLOW_LOGS% EQU 1 call :log_with_timestamp "LOG: Opened details file."
 
 :winner_file_view_reload
-color %color_red% && cls
+color %command_prompt_alert_color% && cls
 echo.
 echo [+]--------*****----------------*****--------[+]
 echo.
@@ -742,7 +747,7 @@ if /i "%delete_winner_file_option%" == "y" (
 
   del /f /q  %winner_details_file_path%
   
-  if %allow_logs% EQU 1 (
+  if %ALLOW_LOGS% EQU 1 (
     call :log_with_timestamp "LOG: Remove '%winner_details_file_path%' file."
   )
 ) else if /i "%delete_winner_file_option%" NEQ "n" (
@@ -750,7 +755,7 @@ if /i "%delete_winner_file_option%" == "y" (
 )
 
 REM REST application/realod
-if %allow_logs% EQU 1 (
+if %ALLOW_LOGS% EQU 1 (
   call :log_with_timestamp "LOG: File '%winner_details_file_path%' not removed."
 )
 goto start_application
@@ -759,9 +764,9 @@ REM EXIT:
 
 :: Minhas observações finais: você é livre para modificar, distribuir, entre 
 :: outros. Mas não esqueça de mencionar o autor original. Fique à vontade.
-:program_close
-if %allow_logs% EQU 1 call :log_with_timestamp "LOG: Goodbye."
-exit
+:close_application
+if %ALLOW_LOGS% EQU 1 call :log_with_timestamp "LOG: Goodbye."
+cls && exit /b
 
 REM LOG:
 
