@@ -14,13 +14,16 @@ set desktop_dir_path=%userprofile%\Desktop
 set documents_dir_path=%userprofile%\Documents
 set temp_dir_path=%temp%
 
-set resources_folder_dir_path=extras
-set resources_folder_function_dir_path=extras\functions
+set resources_folder=resources
+set resoruces_functions_folder=%resources_folder%\functions
 
 set welcome_path=%temp_dir_path%\welcome.quiz.vbs
 set winner_details_file_path=%desktop_dir_path%\winner.txt
 
 set extension_config_file_path=.\config.bat
+set personal_config_text_file=config.personal.txt
+
+set personal_config_batch_file=%resoruces_functions_folder%\personal-config.bat
 
 REM LOGS
 set logs_directory=%documents_dir_path%\logs
@@ -48,6 +51,8 @@ set allow_custom_colors=0
 
 set ALLOW_LOGS=1
 
+set allow_personal_config=1
+
 REM Global variables
 set /a max_repeat_questions=2
 set /a total_displayed_errors=0
@@ -64,9 +69,28 @@ REM Current time format: HH:MM:SS - 14:05:85
 set president_game_start_time=%time:~0,8%
 set president_game_end_time=0
 
+set personal_config_param_defualt="import"
+
 REM Create if exits "logs" directory.
 if not exist %logs_directory% (
   mkdir %logs_directory%
+)
+
+:: A seção abaixo será responsável por carregar as minhas configurações pessoais
+:: do Command Prompt (CMD) como cores, tamanhos, entre outos.
+if exist %personal_config_text_file% (
+  set /p personal_config_param=<%personal_config_text_file%
+)
+
+if not defined personal_config_param ( 
+  set personal_config_param=%personal_config_param_defualt%
+)
+
+if exist %personal_config_batch_file% (
+  :: A variável "personal_config_param" armazena "import" ou "revert".
+  if %allow_personal_config% EQU 1 (
+    call %personal_config_batch_file% %personal_config_param% && cls
+  )
 )
 
 
@@ -151,8 +175,10 @@ if /i "%menu_selected_option%" == "help" (
 
 if /i "%menu_selected_option%" == "egg" (
   :: Uma mensagem "secreta"!
-  call %resources_folder_function_dir_path%\egg.bat %resources_folder_dir_path%\vbs\egg.message.vbs
+  call %resoruces_functions_folder%\egg.bat %resources_folder%\vbs\egg.message.vbs
  
+  if %ALLOW_LOGS% EQU 1 call :log_with_timestamp "LOG: EASTER EGG"
+
   goto update_menu_returned
 )
 
