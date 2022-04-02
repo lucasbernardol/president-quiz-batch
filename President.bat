@@ -3,7 +3,7 @@
 :: President quiz - Batch script
 :: Version: 0.0.1
 ::
-:: Copyright (c) 2022-present, Jos√© Lucas B.Lira.
+:: Copyright (c) 2022-present, JosÈ Lucas B.Lira.
 :: License: MIT
 :: Repository: https://github.com/lucasbernardol/president-quiz-batch/
 
@@ -43,10 +43,10 @@ set question_four_color=05
 set question_five_color=06
 set question_six_color=0c
 
-:: Vari√°vel de "state" (estado) que ir√° permitir a utiliza√ß√£o das cores
-:: customizadas/personalizadas. Para que isso funcione, √©  necess√°rio criar 
-:: um arquivo "config.bat" na raiz do projeto ou no mesmo diret√≥rio do arquivo 
-:: "President.bat". Em geral, usaremos a instru√ß√£o "call".
+:: Vari·vel de "state" (estado) que ir· permitir a utilizaÁ„o das cores
+:: customizadas/personalizadas. Para que isso funcione, È  necess·rio criar 
+:: um arquivo "config.bat" na raiz do projeto ou no mesmo diretÛrio do arquivo 
+:: "President.bat". Em geral, usaremos a instruÁ„o "call".
 set allow_custom_colors=0
 
 set ALLOW_LOGS=1
@@ -57,15 +57,15 @@ REM Global variables
 set /a max_repeat_questions=2
 set /a total_displayed_errors=0
 
-:: A vari√°vel "menu_returned" controla a quantida de vezes em que a hora atual, 
-:: ou seja, o hor√°rio inicial do jogo ser√° exibido em tela. (vari√°vel de estado).
+:: A vari·vel "menu_returned" controla a quantida de vezes em que a hora atual, 
+:: ou seja, o hor·rio inicial do jogo ser· exibido em tela. (vari·vel de estado).
 set /a menu_returned=1
 
 set displayed_error_argument=0
 
 REM Current time format: HH:MM:SS - 14:05:85
-:: As vari√°veis abaixo, armazenam o hor√°rio inicial e final do jogo. Em suma, 
-:: o hor√°rio final ser√° alterado quando ouver um ganhador.
+:: As vari·veis abaixo, armazenam o hor·rio inicial e final do jogo. Em suma, 
+:: o hor·rio final ser· alterado quando ouver um ganhador.
 set president_game_start_time=%time:~0,8%
 set president_game_end_time=0
 
@@ -76,7 +76,7 @@ if not exist %logs_directory% (
   mkdir %logs_directory%
 )
 
-:: A se√ß√£o abaixo ser√° respons√°vel por carregar as minhas configura√ß√µes pessoais
+:: A seÁ„o abaixo ser· respons·vel por carregar as minhas configuraÁıes pessoais
 :: do Command Prompt (CMD) como cores, tamanhos, entre outos.
 if exist %personal_config_text_file% (
   set /p personal_config_param=<%personal_config_text_file%
@@ -87,7 +87,7 @@ if not defined personal_config_param (
 )
 
 if exist %personal_config_batch_file% (
-  :: A vari√°vel "personal_config_param" armazena "import" ou "revert".
+  :: A vari·vel "personal_config_param" armazena "import" ou "revert".
   if %allow_personal_config% EQU 1 (
     call %personal_config_batch_file% %personal_config_param% && cls
   )
@@ -100,8 +100,8 @@ mode 64,32
 if exist %extension_config_file_path% (
   call %extension_config_file_path%
 ) else (
-  :: Antes tudo, s√≥ ser√° poss√≠vel exibir/criar LOGS se a vari√°vel 
-  :: "ALLOW_LOGS" for igual a 1, ou seja, verdadeiro na l√≥gica booleana.
+  :: Antes tudo, sÛ ser· possÌvel exibir/criar LOGS se a vari·vel 
+  :: "ALLOW_LOGS" for igual a 1, ou seja, verdadeiro na lÛgica booleana.
   if %ALLOW_LOGS% EQU 1 call :log_with_timestamp "PRE-LOG: Batch started."
 )
 
@@ -114,7 +114,7 @@ cls && start /wait %welcome_path%
 goto start_application
 
 :welcome_view
-:: Vari√°veis auxiliares para a constru√ß√£o da mensage "welcome" ou de
+:: Vari·veis auxiliares para a construÁ„o da mensage "welcome" ou de
 :: boas vindas! (vbs_body, vbs_title, vbs_context)
 set vbs_body="Seja bem-vindo(a) ao President Quiz!"
 set vbs_title="President quiz - Version: %VERSION%"
@@ -122,7 +122,7 @@ set vbs_context=64
 
 echo MsgBox %vbs_body%, %vbs_context%, %vbs_title%>%welcome_path%
 
-:: A instru√ß√£o "Attrib" ser√° usada para deixar o arquvio "welcome.vbs"
+:: A instruÁ„o "Attrib" ser· usada para deixar o arquvio "welcome.vbs"
 :: oculto (+H) e somente leitura (+R).
 attrib +H +R %welcome_path%
 
@@ -139,8 +139,8 @@ set /a max_repeat_questions=2
 goto start_application
 
 
-:: Essa se√ß√£o √© respons√°vel por exibir o menu/op√ß√µes de jogador. Permitindo
-:: que o usu√°rio tenha duas op√ß√µes: jogar ou sair (as escolhas podem ser alteradas)
+:: Essa seÁ„o È respons·vel por exibir o menu/opÁıes de jogador. Permitindo
+:: que o usu·rio tenha duas opÁıes: jogar ou sair (as escolhas podem ser alteradas)
 :menu
 title President Quiz - version: %VERSION%
 color %command_prompt_color% && cls
@@ -156,8 +156,8 @@ echo [+]----------------------------------------------[+]
 echo.
 echo Info: Para mais detalhes digite "help"!
 echo.
-:: O hor√°rio atual ou hor√°io de in√≠cio de jogo s√≥ ser√° exibito
-:: se a vari√°vel "menu_returned" for menor ou igual a 1.
+:: O hor·rio atual ou hor·io de inÌcio de jogo sÛ ser· exibito
+:: se a vari·vel "menu_returned" for menor ou igual a 1.
 if %menu_returned% LEQ 1 (
   echo Hora inicial: %president_game_start_time% && echo.
 ) 
@@ -192,8 +192,8 @@ if %allow_custom_colors% EQU 1 (
   color %question_one_color%
 ) 
 
-:: O usu√°rio ser√° retornado para esse menu se a op√ß√£o 
-:: escolhida √© inv√°lida.
+:: O usu·rio ser· retornado para esse menu se a opÁ„o 
+:: escolhida È inv·lida.
 :question_one_menu
 cls
 if %max_repeat_questions% EQU 0 (
@@ -233,11 +233,11 @@ if "%question_option%" == "2" (set displayed_error_argument="59 anos")
 if "%question_option%" == "3" (set displayed_error_argument="60 anos")
 if %displayed_error_argument% EQU 0 (set displayed_error_argument="Desconhecido")
 
-:: Idependentemente da op√ß√£o escolhida o contador de erros deve ser
+:: Idependentemente da opÁ„o escolhida o contador de erros deve ser
 :: aumento ou "incrementado" com +1
 set /a total_displayed_errors=%total_displayed_errors% + 1 && cls
 
-:: Abaixo ser√° exibido a "interface" de error/resposta incorreta.
+:: Abaixo ser· exibido a "interface" de error/resposta incorreta.
 echo.
 echo [+]-------------------------------------[+]
 echo.
@@ -600,9 +600,9 @@ if "%question_option%" == "" (
 )
 
 if "%question_option%" == "5" (
-  REM A mensage de "resposta corrent" n√£o ser√° exibida, porque a quest√£o de
-  REM n√∫mero 6, at√© o momento, √© a √∫ltima. Em outras palavras, o ganhador ser√°
-  REM redireciomando para a "interface" de comemora√ß√£o.
+  REM A mensage de "resposta corrent" n„o ser· exibida, porque a quest„o de
+  REM n˙mero 6, atÈ o momento, È a ˙ltima. Em outras palavras, o ganhador ser·
+  REM redireciomando para a "interface" de comemoraÁ„o.
 
   rem ::msg /w * "OK. Resposta correta!"
   
@@ -734,8 +734,8 @@ echo  Total de erros: "%total_displayed_errors%">>%winner_details_file_path%
 
 if %ALLOW_LOGS% EQU 1 call :log_with_timestamp "LOG: Created details file."
 
-:: As pricipais vari√°veis (ou vari√°veis de estado) ser√£o resetadas, ou seja,
-:: ir√£o possuir, novamanete, o valor inicial.
+:: As pricipais vari·veis (ou vari·veis de estado) ser„o resetadas, ou seja,
+:: ir„o possuir, novamanete, o valor inicial.
 set displayed_error_argument=0
 set /a total_displayed_errors=0
 set /a max_repeat_questions=2
@@ -764,10 +764,10 @@ if "%delete_winner_file_option%" == "" (
 )
 
 if /i "%delete_winner_file_option%" == "y" (
-  REM Observa√ß√µes: o comando "ERASE" tamb√©m √© usado para remover ou excluir
-  REM arquivos, por√®m, optei por usado o "DEL", visto que a quantidade de carac-
-  REM teres √© menor, ou seja, "DEL" (termo) possui memos caracteres se comparado
-  REM com "ERASE". √â apenas um escolha pessoal.
+  REM ObservaÁıes: o comando "ERASE" tambÈm È usado para remover ou excluir
+  REM arquivos, porËm, optei por usado o "DEL", visto que a quantidade de carac-
+  REM teres È menor, ou seja, "DEL" (termo) possui memos caracteres se comparado
+  REM com "ERASE". … apenas um escolha pessoal.
 
   REM Example: erase /f /q %winner_details_file_path%
 
@@ -788,18 +788,18 @@ goto start_application
 
 REM EXIT:
 
-:: Minhas observa√ß√µes finais: voc√™ √© livre para modificar, distribuir, entre 
-:: outros. Mas n√£o esque√ßa de mencionar o autor original. Fique √† vontade.
+:: Minhas observaÁıes finais: vocÍ È livre para modificar, distribuir, entre 
+:: outros. Mas n„o esqueÁa de mencionar o autor original. Fique ‡ vontade.
 :close_application
 if %ALLOW_LOGS% EQU 1 call :log_with_timestamp "LOG: Goodbye."
 cls && exit /b
 
 REM LOG:
 
-:: A "label" ou se√ß√£o abaixo, √© uma esp√©cie de fun√ß√£o, respons√°vel por criar
-:: um hist√≥rico das principais instru√ß√µes que foram executadas (Debug). 
-:: Basicamente, os dados/informa√ß√µes s√£o armazenadas no arquivo "president.log", 
-:: localizado no diret√≥rio de "documentos" do computador.
+:: A "label" ou seÁ„o abaixo, È uma espÈcie de funÁ„o, respons·vel por criar
+:: um histÛrico das principais instruÁıes que foram executadas (Debug). 
+:: Basicamente, os dados/informaÁıes s„o armazenadas no arquivo "president.log", 
+:: localizado no diretÛrio de "documentos" do computador.
 :log
 echo:%~1 >>%logs_directory%\%logs_filename_path%
 goto :EOF

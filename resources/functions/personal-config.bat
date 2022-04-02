@@ -54,16 +54,14 @@ del /f /q %regedit_exported_file_path%
 
 goto commnad_exit
 
-
 REM EXIT
 :commnad_exit
 exit /b
 
-
 REM BACKUP
 :function_export_regedit
-:: A instruÃ§Ã£o abaixo, Ã© responsÃ¡vel por remover o Ãºltimo arquivo de "backup"
-:: do REGEDIT do Windows (CMD). ForÃ§ando a exclusÃ£o de arquivos ocultos.
+:: A instrução abaixo, é responsável por remover o último arquivo de "backup"
+:: do REGEDIT do Windows (CMD). Forçando a exclusão de arquivos ocultos.
 del /f /a /q %regedit_exported_file_path%>nul 2>nul
 
 reg export %REG_CURRENT_MACHINE_PATH% %regedit_exported_file_path% /y
