@@ -36,7 +36,7 @@ goto function_backup_import
 
 
 :function_set_regedit
-set data="cls && color %personal_cmd_color% && title Terminal && prompt $p$g "
+set data="cls && color %PERSONAL_COMMAND_PROMPT_COLOR% && title Terminal && prompt $p$g && echo. && echo CMD: Hi %username%"
 
 reg add %REG_CURRENT_MACHINE_PATH% /v Autorun /t REG_SZ /d %data% /f
 
